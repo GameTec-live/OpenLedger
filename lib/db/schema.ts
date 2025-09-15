@@ -116,7 +116,9 @@ export const transaction = pgTable("transaction", {
     amount: doublePrecision().notNull(),
     description: text(),
     createdAt: timestamp().defaultNow().notNull(),
-    correspondentId: text().references(() => user.id, { onDelete: "set null" }),
+    correspondentId: uuid().references(() => person.id, {
+        onDelete: "set null",
+    }),
     invoiceURL: text(),
     projectId: uuid().references(() => project.id, { onDelete: "set null" }),
 });
