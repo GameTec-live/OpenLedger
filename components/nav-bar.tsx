@@ -2,18 +2,19 @@ import {
     Disclosure,
     DisclosureButton,
     DisclosurePanel,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
 } from "@headlessui/react";
 import { MenuIcon, XIcon } from "lucide-react";
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { ModeToggle } from "./mode-toglle";
 import { ProfileMenu } from "./profile-menu";
 
-export default function NavBar({ activeIndex }: { activeIndex: number }) {
+export default async function NavBar({ activeIndex }: { activeIndex: number }) {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
     return (
         <Disclosure
             as="nav"
@@ -75,6 +76,30 @@ export default function NavBar({ activeIndex }: { activeIndex: number }) {
                             >
                                 Projects
                             </Link>
+                            {session && (
+                                <>
+                                    <Link
+                                        href="/groups"
+                                        className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+                                            activeIndex === 2
+                                                ? "border-indigo-600 dark:border-indigo-500 text-gray-900 dark:text-white"
+                                                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-white"
+                                        }`}
+                                    >
+                                        Groups
+                                    </Link>
+                                    <Link
+                                        href="/person"
+                                        className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+                                            activeIndex === 3
+                                                ? "border-indigo-600 dark:border-indigo-500 text-gray-900 dark:text-white"
+                                                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-white"
+                                        }`}
+                                    >
+                                        Person
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">

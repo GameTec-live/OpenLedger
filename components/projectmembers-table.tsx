@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { DataTable } from "@/components/data-table";
 import type { ProjectParticipant } from "@/lib/db/queries/projectmember";
-import { Checkbox } from "./ui/checkbox";
+import ProjectCheckbox from "./project-checkbox";
 
 export function ProjectmemberTable({
     participants,
@@ -14,10 +14,15 @@ export function ProjectmemberTable({
     const columns: ColumnDef<ProjectParticipant>[] = [
         {
             id: "actions",
-            cell: () => {
+            cell: ({ row }) => {
                 return (
                     <div className="flex flex-col items-center">
-                        <Checkbox />
+                        <ProjectCheckbox
+                            personId={row.original.personId}
+                            projectId={row.original.projectId}
+                            paidAt={row.original.paidAt}
+                            refundedAt={row.original.refundedAt}
+                        />
                     </div>
                 );
             },
