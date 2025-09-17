@@ -39,7 +39,7 @@ export function RegisterForm({
                 email: email.current.value,
                 password: password.current.value,
                 name: name.current.value,
-                callbackURL: "/dashboard",
+                callbackURL: "/",
             },
             {
                 onRequest: () => {

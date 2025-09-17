@@ -28,7 +28,7 @@ export function LoginForm({
             {
                 email: email.current.value,
                 password: password.current.value,
-                callbackURL: "/dashboard",
+                callbackURL: "/",
                 rememberMe: rememberMe.current?.value
                     ? rememberMe.current.value === "on"
                     : true,
