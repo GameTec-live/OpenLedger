@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreatePersonDialog } from "@/components/person-dialogs";
+import { PersonTable } from "@/components/person-table";
 import { auth } from "@/lib/auth";
 import { getPersons } from "@/lib/db/queries/person";
 
@@ -21,7 +21,10 @@ export default async function Page() {
             <h1 className="text-4xl font-semibold mb-6 mt-4 text-center">
                 Persons
             </h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+            <div className="mb-4 flex justify-end">
+                <CreatePersonDialog />
+            </div>
+            <PersonTable persons={persons} />
         </main>
     );
 }
