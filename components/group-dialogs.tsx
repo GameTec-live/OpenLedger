@@ -23,7 +23,7 @@ import type { GetPersonsQueryResult } from "@/lib/db/queries/person";
 type Person = GetPersonsQueryResult[number];
 
 function personsToItems(persons: Person[]): ComboBoxItem[] {
-    return persons.map((p) => ({ value: p.id, label: p.name }));
+    return persons.map((p) => ({ value: p.name + p.id, label: p.name }));
 }
 
 export function GroupCreateDialog({ persons }: { persons: Person[] }) {

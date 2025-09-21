@@ -29,7 +29,7 @@ export default async function Page({
     const persons = await getPersons();
     const eligible = participants.filter((p) => p.paidAt && !p.refundedAt);
     const personItems = persons.map((p) => ({
-        value: p.id,
+        value: p.name + p.id,
         label: p.name ?? p.id,
     }));
 
