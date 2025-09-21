@@ -6,13 +6,6 @@ import { auth } from "@/lib/auth";
 import { person, user } from "../schema";
 
 export async function getPersons() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-        throw new Error("No session found");
-    }
     return await db.select().from(person);
 }
 

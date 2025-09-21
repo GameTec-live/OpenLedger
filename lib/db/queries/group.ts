@@ -6,13 +6,6 @@ import { auth } from "@/lib/auth";
 import { group, groupMember, person } from "../schema";
 
 export async function getGroups() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if (!session) {
-        throw new Error("No session found");
-    }
     return await db.select().from(group);
 }
 
@@ -99,14 +92,12 @@ export async function createGroup(input: {
         const existingIds = new Set(existing.map((p) => p.id));
         const validIds = memberIds.filter((id) => existingIds.has(id));
         if (validIds.length > 0) {
-            await db
-                .insert(groupMember)
-                .values(
-                    validIds.map((pid) => ({
-                        groupId: created.id,
-                        personId: pid,
-                    })),
-                );
+            await db.insert(groupMember).values(
+                validIds.map((pid) => ({
+                    groupId: created.id,
+                    personId: pid,
+                })),
+            );
         }
     }
 
