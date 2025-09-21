@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib";
 import { person, project, transaction } from "../schema";
 
@@ -18,7 +18,8 @@ export async function getTransactionsOfLedger(ledgerId: string) {
         .from(transaction)
         .leftJoin(person, eq(transaction.correspondentId, person.id))
         .leftJoin(project, eq(transaction.projectId, project.id))
-        .where(eq(transaction.ledgerId, ledgerId));
+        .where(eq(transaction.ledgerId, ledgerId))
+        .orderBy(desc(transaction.createdAt));
 }
 
 export async function getTransactionById(transactionId: string) {

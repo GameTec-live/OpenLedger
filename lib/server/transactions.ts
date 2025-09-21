@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { ledger, projectParticipant, transaction } from "@/lib/db/schema";
 
 export async function createTransactionForParticipant(input: {
-    projectId: string;
+    projectId: string | null;
     personId: string;
     ledgerId: string;
     amount: number;
@@ -49,26 +49,28 @@ export async function createTransactionForParticipant(input: {
         .where(eq(ledger.id, input.ledgerId));
 
     // Link to participant as paid or refunded
-    if (input.refund) {
-        await db
-            .update(projectParticipant)
-            .set({ refundedAt: new Date(), refundedTransactionId: tx.id })
-            .where(
-                and(
-                    eq(projectParticipant.projectId, input.projectId),
-                    eq(projectParticipant.personId, input.personId),
-                ),
-            );
-    } else {
-        await db
-            .update(projectParticipant)
-            .set({ paidAt: new Date(), paidTransactionId: tx.id })
-            .where(
-                and(
-                    eq(projectParticipant.projectId, input.projectId),
-                    eq(projectParticipant.personId, input.personId),
-                ),
-            );
+    if (input.projectId) {
+        if (input.refund) {
+            await db
+                .update(projectParticipant)
+                .set({ refundedAt: new Date(), refundedTransactionId: tx.id })
+                .where(
+                    and(
+                        eq(projectParticipant.projectId, input.projectId),
+                        eq(projectParticipant.personId, input.personId),
+                    ),
+                );
+        } else {
+            await db
+                .update(projectParticipant)
+                .set({ paidAt: new Date(), paidTransactionId: tx.id })
+                .where(
+                    and(
+                        eq(projectParticipant.projectId, input.projectId),
+                        eq(projectParticipant.personId, input.personId),
+                    ),
+                );
+        }
     }
 
     return tx;
