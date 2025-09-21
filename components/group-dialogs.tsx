@@ -22,8 +22,30 @@ import type { GetPersonsQueryResult } from "@/lib/db/queries/person";
 
 type Person = GetPersonsQueryResult[number];
 
+// Helper to build the combined value used for search + uniqueness
+function personValue(p: Person) {
+    return `${p.name ?? ""}${p.id}`;
+}
+
 function personsToItems(persons: Person[]): ComboBoxItem[] {
-    return persons.map((p) => ({ value: p.name + p.id, label: p.name }));
+    return persons.map((p) => ({
+        value: personValue(p),
+        label: p.name ?? p.id,
+    }));
+}
+
+// Resolve ComboBox values (name+id) back to IDs
+function valuesToIds(values: string[], persons: Person[]): string[] {
+    const map = new Map(persons.map((p) => [personValue(p), p.id] as const));
+    const ids = values.map((v) => map.get(v)).filter(Boolean) as string[];
+    // De-duplicate while preserving order
+    return Array.from(new Set(ids));
+}
+
+// Map IDs to ComboBox values for initial selections
+function idsToValues(ids: string[], persons: Person[]): string[] {
+    const byId = new Map(persons.map((p) => [p.id, personValue(p)] as const));
+    return ids.map((id) => byId.get(id)).filter(Boolean) as string[];
 }
 
 export function GroupCreateDialog({ persons }: { persons: Person[] }) {
@@ -32,13 +54,14 @@ export function GroupCreateDialog({ persons }: { persons: Person[] }) {
     const router = useRouter();
 
     const [name, setName] = useState("");
-    const [memberIds, setMemberIds] = useState<string[]>([]);
+    // Store ComboBox selections as combined values (name+id)
+    const [selectedValues, setSelectedValues] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isOpen) {
             setName("");
-            setMemberIds([]);
+            setSelectedValues([]);
             setError(null);
         }
     }, [isOpen]);
@@ -47,6 +70,7 @@ export function GroupCreateDialog({ persons }: { persons: Person[] }) {
 
     const onCreate = async () => {
         setError(null);
+        const memberIds = valuesToIds(selectedValues, persons);
         startTransition(async () => {
             try {
                 await createGroup({ name, memberIds });
@@ -89,9 +113,9 @@ export function GroupCreateDialog({ persons }: { persons: Person[] }) {
                         <ComboBox
                             items={items}
                             multiple
-                            value={memberIds}
+                            value={selectedValues}
                             onChange={(v) =>
-                                setMemberIds(Array.isArray(v) ? v : [v])
+                                setSelectedValues(Array.isArray(v) ? v : [v])
                             }
                             placeholder={"+ Add persons"}
                             buttonClassName="w-full justify-between"
@@ -132,21 +156,25 @@ export function GroupEditDialog({
     const router = useRouter();
 
     const [name, setName] = useState(initialName);
-    const [memberIds, setMemberIds] = useState<string[]>(initialMemberIds);
+    // Store ComboBox selections as combined values (name+id)
+    const [selectedValues, setSelectedValues] = useState<string[]>(
+        idsToValues(initialMemberIds, persons),
+    );
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
             setName(initialName);
-            setMemberIds(initialMemberIds);
+            setSelectedValues(idsToValues(initialMemberIds, persons));
             setError(null);
         }
-    }, [isOpen, initialName, initialMemberIds]);
+    }, [isOpen, initialName, initialMemberIds, persons]);
 
     const items = useMemo(() => personsToItems(persons), [persons]);
 
     const onSave = async () => {
         setError(null);
+        const memberIds = valuesToIds(selectedValues, persons);
         startTransition(async () => {
             try {
                 await updateGroupById({ id: groupId, name, memberIds });
@@ -188,9 +216,9 @@ export function GroupEditDialog({
                         <ComboBox
                             items={items}
                             multiple
-                            value={memberIds}
+                            value={selectedValues}
                             onChange={(v) =>
-                                setMemberIds(Array.isArray(v) ? v : [v])
+                                setSelectedValues(Array.isArray(v) ? v : [v])
                             }
                             placeholder={"+ Add persons"}
                             buttonClassName="w-full justify-between"

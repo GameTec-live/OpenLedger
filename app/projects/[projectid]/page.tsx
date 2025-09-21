@@ -31,6 +31,7 @@ export default async function Page({
     const personItems = persons.map((p) => ({
         value: p.name + p.id,
         label: p.name ?? p.id,
+        original: p.id,
     }));
 
     return (

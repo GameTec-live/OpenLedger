@@ -30,12 +30,13 @@ export function CreatePayoutDialog({
     projectAmount: number;
     ledgers: Ledger[];
     eligible: ProjectParticipant[];
-    personItems: { value: string; label: string }[];
+    personItems: { value: string; label: string; original: string }[];
 }) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [ledgerId, setLedgerId] = useState("");
-    const [personId, setPersonId] = useState("");
+    const [personId, setPersonId] = useState(""); // pure ID for backend
+    const [selectedPersonValue, setSelectedPersonValue] = useState(""); // combined value for ComboBox
     const [description, setDescription] = useState("");
     const [error, setError] = useState<string | null>(null);
     const ledgerItems = ledgers.map((l) => ({ value: l.id, label: l.name }));
@@ -50,8 +51,16 @@ export function CreatePayoutDialog({
             setError(null);
             setLedgerId("");
             setPersonId("");
+            setSelectedPersonValue("");
         }
     }, [open]);
+
+    const onPersonChange = (v: string | string[]) => {
+        const val = Array.isArray(v) ? v[0] : v;
+        setSelectedPersonValue(val ?? "");
+        const match = personItems.find((i) => i.value === val);
+        setPersonId(match?.original ?? "");
+    };
 
     const onSubmit = async () => {
         setError(null);
@@ -63,13 +72,12 @@ export function CreatePayoutDialog({
                 if (!Number.isFinite(amt)) throw new Error("Invalid amount");
                 await createTransactionForParticipant({
                     projectId,
-                    personId,
+                    personId, // resolved pure ID
                     ledgerId,
                     amount: amt,
                     description,
                     refund: true,
                 });
-                // Mark project as paid out after successful payout tx
                 await setProjectPaidOut(projectId);
                 setOpen(false);
             } catch (e: unknown) {
@@ -109,8 +117,8 @@ export function CreatePayoutDialog({
                         <Label>Recipient (person)</Label>
                         <ComboBox
                             items={personItems}
-                            value={personId}
-                            onChange={(v) => setPersonId(String(v))}
+                            value={selectedPersonValue} // combined value for UI
+                            onChange={onPersonChange} // resolve to original ID
                             placeholder="Select recipient"
                             buttonClassName="w-full justify-between"
                             contentClassName="w-[360px] p-0"

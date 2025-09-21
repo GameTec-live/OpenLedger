@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/lib";
 import { auth } from "@/lib/auth";
-import { projectParticipant, transaction } from "@/lib/db/schema";
+import { ledger, projectParticipant, transaction } from "@/lib/db/schema";
 
 export async function createTransactionForParticipant(input: {
     projectId: string;
@@ -35,6 +35,18 @@ export async function createTransactionForParticipant(input: {
         .returning();
 
     if (!tx) throw new Error("Failed to create transaction");
+
+    // Update ledger balance
+    const [ledgerBalance] = await db
+        .select()
+        .from(ledger)
+        .where(eq(ledger.id, input.ledgerId));
+    await db
+        .update(ledger)
+        .set({
+            amount: ledgerBalance.amount + amount,
+        })
+        .where(eq(ledger.id, input.ledgerId));
 
     // Link to participant as paid or refunded
     if (input.refund) {
