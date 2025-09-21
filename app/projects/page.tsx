@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import Link from "next/link";
+import { CreateProjectDialog } from "@/components/project-dialogs";
 import {
     Card,
     CardContent,
@@ -7,16 +9,27 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
+import { getGroups } from "@/lib/db/queries/group";
+import { getPersons } from "@/lib/db/queries/person";
 import { getProjects } from "@/lib/db/queries/project";
 
 export default async function Page() {
-    const projects = await getProjects();
+    const session = await auth.api.getSession({ headers: await headers() });
+    const [projects, persons, groups] = await Promise.all([
+        getProjects(),
+        getPersons(),
+        getGroups(),
+    ]);
 
     return (
         <main className="mx-4">
-            <h1 className="text-4xl font-semibold mb-6 mt-4 text-center">
-                Projects
-            </h1>
+            <div className="mt-4 mb-6 flex items-center justify-between">
+                <h1 className="text-4xl font-semibold">Projects</h1>
+                {session !== null && (
+                    <CreateProjectDialog persons={persons} groups={groups} />
+                )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {projects.map((project) => (
                     <Link key={project.id} href={`/projects/${project.id}`}>

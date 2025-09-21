@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { DataTable } from "@/components/data-table";
 import type { Transaction } from "@/lib/db/queries/transaction";
@@ -53,6 +54,21 @@ export function TransactionTable({
                     );
                 }
                 return <span>-</span>;
+            },
+        },
+        {
+            accessorKey: "description",
+            header: "Description",
+        },
+        {
+            id: "details",
+            header: "Details",
+            cell: ({ row }) => {
+                return (
+                    <Link href={`/transactions/${row.original.id}`}>
+                        <ExternalLink className="w-4 h-4" />
+                    </Link>
+                );
             },
         },
     ];

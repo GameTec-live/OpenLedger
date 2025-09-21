@@ -8,8 +8,12 @@ import ProjectCheckbox from "./project-checkbox";
 
 export function ProjectmemberTable({
     participants,
+    projectAmount,
+    refundable,
 }: {
     participants: ProjectParticipant[];
+    projectAmount?: number;
+    refundable?: boolean;
 }) {
     const columns: ColumnDef<ProjectParticipant>[] = [
         {
@@ -22,6 +26,11 @@ export function ProjectmemberTable({
                             projectId={row.original.projectId}
                             paidAt={row.original.paidAt}
                             refundedAt={row.original.refundedAt}
+                            personName={
+                                row.original.name ?? row.original.personId
+                            }
+                            projectAmount={projectAmount}
+                            refundable={refundable}
                         />
                     </div>
                 );
@@ -30,6 +39,14 @@ export function ProjectmemberTable({
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row }) => (
+                <div className="flex flex-col">
+                    <span>{row.original.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                        {row.original.personId}
+                    </span>
+                </div>
+            ),
         },
         {
             accessorKey: "paidAt",
@@ -41,6 +58,11 @@ export function ProjectmemberTable({
                 const paidAt = new Date(row.original.paidAt);
                 return paidAt.toLocaleString();
             },
+        },
+        {
+            accessorKey: "paidAmount",
+            header: "Paid Amount",
+            cell: ({ row }) => (row.original.paidAmount ?? 0).toString(),
         },
         {
             accessorKey: "paidTransactionId",
@@ -68,6 +90,11 @@ export function ProjectmemberTable({
                 const refundedAt = new Date(row.original.refundedAt);
                 return refundedAt.toLocaleString();
             },
+        },
+        {
+            accessorKey: "refundedAmount",
+            header: "Refunded Amount",
+            cell: ({ row }) => (row.original.refundedAmount ?? 0).toString(),
         },
         {
             accessorKey: "refundedTransactionId",

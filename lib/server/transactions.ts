@@ -1,0 +1,63 @@
+"use server";
+import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { db } from "@/lib";
+import { auth } from "@/lib/auth";
+import { projectParticipant, transaction } from "@/lib/db/schema";
+
+export async function createTransactionForParticipant(input: {
+    projectId: string;
+    personId: string;
+    ledgerId: string;
+    amount: number;
+    description?: string | null;
+    invoiceURL?: string | null;
+    refund?: boolean;
+}) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) throw new Error("No session found");
+
+    const amount = Number(input.amount);
+    if (!Number.isFinite(amount)) throw new Error("Invalid amount");
+    const description = input.description?.trim() || null;
+    const invoiceURL = input.invoiceURL?.trim() || null;
+
+    const [tx] = await db
+        .insert(transaction)
+        .values({
+            ledgerId: input.ledgerId,
+            amount,
+            description,
+            correspondentId: input.personId,
+            invoiceURL,
+            projectId: input.projectId,
+        })
+        .returning();
+
+    if (!tx) throw new Error("Failed to create transaction");
+
+    // Link to participant as paid or refunded
+    if (input.refund) {
+        await db
+            .update(projectParticipant)
+            .set({ refundedAt: new Date(), refundedTransactionId: tx.id })
+            .where(
+                and(
+                    eq(projectParticipant.projectId, input.projectId),
+                    eq(projectParticipant.personId, input.personId),
+                ),
+            );
+    } else {
+        await db
+            .update(projectParticipant)
+            .set({ paidAt: new Date(), paidTransactionId: tx.id })
+            .where(
+                and(
+                    eq(projectParticipant.projectId, input.projectId),
+                    eq(projectParticipant.personId, input.personId),
+                ),
+            );
+    }
+
+    return tx;
+}
