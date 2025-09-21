@@ -8,9 +8,9 @@ import { getTransactionById } from "@/lib/db/queries/transaction";
 export default async function Page({
     params,
 }: {
-    params: { transactionid: string };
+    params: Promise<{ transactionid: string }>;
 }) {
-    const { transactionid } = params;
+    const { transactionid } = await params;
 
     const transaction = await getTransactionById(transactionid);
 
