@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { GroupDeleteDialog } from "@/components/group-delete-dialog";
+import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { getGroups } from "@/lib/db/queries/group";
 
@@ -23,13 +24,24 @@ export default async function Page() {
             </h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {groups.map((group) => (
-                    <Link key={group.id} href={`/groups/${group.id}`}>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{group.name}</CardTitle>
-                            </CardHeader>
-                        </Card>
-                    </Link>
+                    <Card key={group.id}>
+                        <div className="flex items-center justify-between">
+                            <Link
+                                href={`/groups/${group.id}`}
+                                className="flex-1"
+                            >
+                                <CardHeader>
+                                    <CardTitle>{group.name}</CardTitle>
+                                </CardHeader>
+                            </Link>
+                            <CardAction className="mr-4">
+                                <GroupDeleteDialog
+                                    groupId={group.id}
+                                    groupName={group.name}
+                                />
+                            </CardAction>
+                        </div>
+                    </Card>
                 ))}
             </div>
         </main>
