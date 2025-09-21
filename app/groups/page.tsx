@@ -2,9 +2,11 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { GroupDeleteDialog } from "@/components/group-delete-dialog";
+import { GroupCreateDialog } from "@/components/group-dialogs";
 import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { getGroups } from "@/lib/db/queries/group";
+import { getPersons } from "@/lib/db/queries/person";
 
 export default async function Page() {
     const session = await auth.api.getSession({
@@ -15,13 +17,14 @@ export default async function Page() {
         return redirect("/login");
     }
 
-    const groups = await getGroups();
+    const [groups, persons] = await Promise.all([getGroups(), getPersons()]);
 
     return (
         <main className="mx-4">
-            <h1 className="text-4xl font-semibold mb-6 mt-4 text-center">
-                Groups
-            </h1>
+            <div className="mt-4 mb-6 flex items-center justify-between">
+                <h1 className="text-4xl font-semibold">Groups</h1>
+                <GroupCreateDialog persons={persons} />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {groups.map((group) => (
                     <Card key={group.id}>
