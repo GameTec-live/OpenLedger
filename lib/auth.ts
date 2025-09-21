@@ -10,6 +10,6 @@ export const auth = betterAuth({
     }),
     emailAndPassword: {
         enabled: true,
-        disableSignUp: false,
+        disableSignUp: true,
     },
 });
