@@ -83,6 +83,7 @@ export async function payoutProject(
     ledgerId: string,
     amount: number,
     description: string,
+    invoiceURL: string | null,
 ) {
     await createTransactionForParticipant({
         projectId,
@@ -91,6 +92,7 @@ export async function payoutProject(
         amount: amount,
         description,
         refund: true,
+        invoiceURL,
     });
     await setProjectPaidOut(projectId);
 }

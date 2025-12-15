@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useTransition } from "react";
+import { Camera, X } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { ComboBox } from "@/components/combobox";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,22 +38,100 @@ export function CreatePayoutDialog({
     const [personId, setPersonId] = useState(""); // pure ID for backend
     const [selectedPersonValue, setSelectedPersonValue] = useState(""); // combined value for ComboBox
     const [description, setDescription] = useState("");
+    const [invoiceUrl, setInvoiceUrl] = useState("");
+    const [cameraOpen, setCameraOpen] = useState(false);
+    const [cameraReady, setCameraReady] = useState(false);
+    const [streamReady, setStreamReady] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const ledgerItems = ledgers.map((l) => ({ value: l.id, label: l.name }));
+
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
 
     const count = eligible.length;
     const total = projectAmount * count;
     const [amount, setAmount] = useState(String(-Math.abs(total)));
 
+    const startCamera = async () => {
+        try {
+            setCameraOpen(true);
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" },
+            });
+            streamRef.current = stream;
+            setStreamReady(true);
+        } catch (err) {
+            setError("Could not access camera");
+            setCameraOpen(false);
+        }
+    };
+
+    // Attach stream to video element once both are available
+    useEffect(() => {
+        if (
+            cameraOpen &&
+            streamReady &&
+            streamRef.current &&
+            videoRef.current
+        ) {
+            const video = videoRef.current;
+            video.srcObject = streamRef.current;
+            video.onloadedmetadata = () => {
+                video.play();
+                setCameraReady(true);
+            };
+        }
+    }, [cameraOpen, streamReady]);
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            for (const track of streamRef.current.getTracks()) {
+                track.stop();
+            }
+            streamRef.current = null;
+        }
+        setCameraOpen(false);
+        setCameraReady(false);
+        setStreamReady(false);
+    };
+
     useEffect(() => {
         if (open) {
             setDescription("");
+            setInvoiceUrl("");
+            setCameraOpen(false);
             setError(null);
             setLedgerId("");
             setPersonId("");
             setSelectedPersonValue("");
+        } else {
+            // Clean up camera stream when dialog closes
+            stopCamera();
         }
     }, [open]);
+
+    const capturePhoto = () => {
+        if (!videoRef.current || !canvasRef.current) return;
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+
+        // Ensure video has valid dimensions
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+            setError("Camera not ready yet, please wait");
+            return;
+        }
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+            setInvoiceUrl(dataUrl);
+            stopCamera();
+        }
+    };
 
     const onPersonChange = (v: string | string[]) => {
         const val = Array.isArray(v) ? v[0] : v;
@@ -75,6 +154,7 @@ export function CreatePayoutDialog({
                     ledgerId,
                     amt,
                     description,
+                    invoiceUrl,
                 );
                 setOpen(false);
             } catch (e: unknown) {
@@ -135,6 +215,63 @@ export function CreatePayoutDialog({
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                         />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Invoice URL</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                value={invoiceUrl}
+                                onChange={(e) => setInvoiceUrl(e.target.value)}
+                                placeholder="Enter URL or take a photo"
+                                className="flex-1"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={cameraOpen ? stopCamera : startCamera}
+                                title={
+                                    cameraOpen ? "Close camera" : "Take photo"
+                                }
+                            >
+                                {cameraOpen ? (
+                                    <X className="h-4 w-4" />
+                                ) : (
+                                    <Camera className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </div>
+                        {cameraOpen && (
+                            <div className="relative mt-2">
+                                <video
+                                    ref={videoRef}
+                                    className="w-full rounded-md border"
+                                    autoPlay
+                                    playsInline
+                                    muted
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={capturePhoto}
+                                    className="mt-2 w-full"
+                                    disabled={!cameraReady}
+                                >
+                                    {cameraReady
+                                        ? "Capture Photo"
+                                        : "Loading camera..."}
+                                </Button>
+                            </div>
+                        )}
+                        <canvas ref={canvasRef} className="hidden" />
+                        {invoiceUrl && invoiceUrl.startsWith("data:image") && (
+                            <div className="mt-2">
+                                <img
+                                    src={invoiceUrl}
+                                    alt="Captured invoice"
+                                    className="max-h-32 rounded-md border"
+                                />
+                            </div>
+                        )}
                     </div>
                     {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>

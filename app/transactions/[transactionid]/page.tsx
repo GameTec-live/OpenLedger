@@ -143,14 +143,30 @@ export default async function Page({
                                     </div>
                                     <div className="mt-1">
                                         {tx.invoiceURL ? (
-                                            <Link
-                                                href={tx.invoiceURL}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-primary hover:underline break-all"
-                                            >
-                                                View invoice
-                                            </Link>
+                                            tx.invoiceURL.startsWith(
+                                                "data:image",
+                                            ) ? (
+                                                <a
+                                                    href={tx.invoiceURL}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <img
+                                                        src={tx.invoiceURL}
+                                                        alt="Invoice"
+                                                        className="max-h-48 rounded-md border cursor-pointer hover:opacity-90"
+                                                    />
+                                                </a>
+                                            ) : (
+                                                <Link
+                                                    href={tx.invoiceURL}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline break-all"
+                                                >
+                                                    View invoice
+                                                </Link>
+                                            )
                                         ) : (
                                             "—"
                                         )}
