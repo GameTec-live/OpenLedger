@@ -15,9 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Ledger } from "@/lib/db/queries/ledger";
-import { setProjectPaidOut } from "@/lib/db/queries/project";
 import type { ProjectParticipant } from "@/lib/db/queries/projectmember";
-import { createTransactionForParticipant } from "@/lib/server/transactions";
+import { payoutProject } from "@/lib/server/transactions";
 
 export function CreatePayoutDialog({
     projectId,
@@ -70,15 +69,13 @@ export function CreatePayoutDialog({
                 if (!personId) throw new Error("Select a person");
                 const amt = Number(amount);
                 if (!Number.isFinite(amt)) throw new Error("Invalid amount");
-                await createTransactionForParticipant({
+                await payoutProject(
                     projectId,
                     personId, // resolved pure ID
                     ledgerId,
-                    amount: amt,
+                    amt,
                     description,
-                    refund: true,
-                });
-                await setProjectPaidOut(projectId);
+                );
                 setOpen(false);
             } catch (e: unknown) {
                 const msg =

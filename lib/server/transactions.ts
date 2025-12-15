@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib";
 import { auth } from "@/lib/auth";
 import { ledger, projectParticipant, transaction } from "@/lib/db/schema";
+import { setProjectPaidOut } from "../db/queries/project";
 
 export async function createTransactionForParticipant(input: {
     projectId: string | null;
@@ -74,4 +75,22 @@ export async function createTransactionForParticipant(input: {
     }
 
     return tx;
+}
+
+export async function payoutProject(
+    projectId: string,
+    personId: string,
+    ledgerId: string,
+    amount: number,
+    description: string,
+) {
+    await createTransactionForParticipant({
+        projectId,
+        personId, // resolved pure ID
+        ledgerId,
+        amount: amount,
+        description,
+        refund: true,
+    });
+    await setProjectPaidOut(projectId);
 }
